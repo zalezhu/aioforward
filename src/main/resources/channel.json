@@ -1,0 +1,5 @@
+[
+{id:"48",serverIp:"172.19.100.193",serverPort:22828,clientPort:22829,type:"union"},
+{id:"57",serverIp:"172.19.100.188",serverPort:22826,clientPort:22827,type:"posp"},
+{id:"49",serverIp:"172.19.100.193",serverPort:22126,clientPort:22128,type:"posp"}
+]
