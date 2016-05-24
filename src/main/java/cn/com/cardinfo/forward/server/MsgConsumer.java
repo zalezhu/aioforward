@@ -89,23 +89,15 @@ public class MsgConsumer extends EventSource implements Runnable {
 						push(toChannel.getClientSession(), dataBytes);
 						logger.debug("send data to {} --> {}",toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 					} else {
-						logger.debug("the  channel {} is null , So we do not send any data {}" ,String.valueOf(dataBytes[44]));
+						logger.info("the  channel {} is null , So we do not send any data {}" ,String.valueOf(dataBytes[44]));
 					}
-				} /*else if (dataBytes.length >= 44) {
-					if (Pools.SessionPool.get(Pools.OSYSTEM_CLIENT) != null
-							&& !Pools.SessionPool.get(Pools.OSYSTEM_CLIENT).isClosed()) {
-						push(Pools.OSYSTEM_CLIENT, dataBytes);
-						logger.debug("send data to OLD_SYSTEM -->" + HsmUtil.bytesToHexString(dataBytes));
-					} else {
-						logger.debug("the client of the OLD_SYSTEM is not connected , So we do not send any data");
-					}
-				}*/ else {
+				} else {
 					for(Channel toChannel:Hub.getInstance().getPospChannels()){
 						if (toChannel!= null) {
 							push(toChannel.getClientSession(), dataBytes);
 							logger.debug("send data to {} --> {}",toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 						} else {
-							logger.debug("{} the  channel is null , So we do not send any data",id);
+							logger.info("{} the  channel is null , So we do not send any data",id);
 						}
 					}
 				}
@@ -114,6 +106,8 @@ public class MsgConsumer extends EventSource implements Runnable {
 				if(toChannel!=null){
 					push(toChannel.getClientSession(), dataBytes);
 					logger.debug("send data to {}---> {}",toChannel.getId(), HsmUtil.bytesToHexString(dataBytes));
+				}else{
+					logger.info("All of the  union channel is null , So we do not send any data to union"); 
 				}
 			}
 		}
@@ -153,8 +147,6 @@ public class MsgConsumer extends EventSource implements Runnable {
 				}
 				if (qOutput != null) {
 					byte[] heads = Arrays.copyOfRange(qOutput, 0, 4);
-					// logger.debug(fromQueueKey+"
-					// heads--->"+HsmUtil.bytesToHexString(heads));
 					int bodyLength = Integer.parseInt(new String(heads).trim());
 					remainBytes = processMsg(qOutput, bodyLength + 4);
 					if (remainBytes != null && remainBytes.length > 0) {

@@ -35,7 +35,7 @@ public class TcpClientWrap extends BaseTCP{
 
 	public void start(){
 		tcpClient.startClient(ip, port);
-		logger.info("Client of {} is started.IP is {},port is {}",id,ip,port);
+		logger.info("Client of {} is connected.IP is {},port is {}",id,ip,port);
 	}
 
 	public AioTcpClient getTcpClient() {

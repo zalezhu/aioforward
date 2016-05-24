@@ -36,7 +36,7 @@ public class TcpServerWrap extends BaseTCP{
 	@Override
 	public void start() {
 		 tcpServer.accept();
-		 logger.info("Server of {} is started.Port is {}",id,port);
+		 logger.info("Server of {} is accpet.Port is {}",id,port);
 	}
 
 }

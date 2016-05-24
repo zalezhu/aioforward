@@ -50,7 +50,7 @@ public class ChannelsUtil {
 				}
 				channelJson+=line;
 			}
-			logger.debug("union : {}",channelJson);
+			logger.info("union : {}",channelJson);
 		}catch (IOException e) {
 			logger.error("",e);
 		}finally{
