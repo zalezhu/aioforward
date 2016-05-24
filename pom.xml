@@ -48,7 +48,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>cn.com.cardinfo.App.ForwardApplication</mainClass>
+							<mainClass>cn.com.cardinfo.forward.App.ForwardApplication</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

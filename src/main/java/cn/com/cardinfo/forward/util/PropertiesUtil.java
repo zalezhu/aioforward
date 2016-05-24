@@ -84,42 +84,6 @@ public class PropertiesUtil {
 	public static int getHeartbeatInterval() {
 		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("heart.beat.interval"));
 	}
-	public static String getUnionpayip() {
-		return PropertiesUtil.getInstance().getConfig("unionpayip");
-	}
-
-	public static int getUnionpayport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("unionpayport"));
-	}
-
-
-	public static int getUnionpaybackport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("unionpaybackport"));
-	}
-
-	public static String getOldsystemip() {
-		return PropertiesUtil.getInstance().getConfig("oldsystemip");
-	}
-
-	public static int getOldsystemport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("oldsystemport"));
-	}
-
-	public static int getOldsystembackport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("oldsystembackport"));
-	}
-
-	public static String getNewsystemip() {
-		return PropertiesUtil.getInstance().getConfig("newsystemip");
-	}
-
-	public static int getNewsystemport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("newsystemport"));
-	}
-
-	public static int getNewsystembackport() {
-		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("newsystembackport"));
-	}
 	
 	public static int getReadBufferSize() {
 		return Integer.parseInt(PropertiesUtil.getInstance().getConfig("read.buffer.size"));
