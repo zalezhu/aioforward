@@ -68,7 +68,7 @@ public class AioAcceptHandler extends EventSource implements CompletionHandler<A
 			if(session!=null){
 				session.resetSocketChannel(socket);
 			}else{
-				session = new AioTcpServerSession(attachment,socket, PropertiesUtil.getReadBufferSize(),id);
+				session = new AioTcpServerSession(attachment,socket, PropertiesUtil.getReadBufferSize(),id,channel);
 				Hub.getInstance().getChannel(id).setServerSession(session);
 			}
 			session.process();

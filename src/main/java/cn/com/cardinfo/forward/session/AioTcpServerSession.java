@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import cn.com.cardinfo.forward.channel.Channel;
 import cn.com.cardinfo.forward.event.Event;
 import cn.com.cardinfo.forward.event.EventSubscriber;
 import cn.com.cardinfo.forward.event.EventType;
-import cn.com.cardinfo.forward.event.EventSource.NotifyType;
 import cn.com.cardinfo.forward.server.AioReadHandler;
 import cn.com.cardinfo.forward.server.MsgConsumer;
 import cn.com.cardinfo.forward.util.ExecutorsPool;
@@ -32,6 +32,7 @@ public class AioTcpServerSession extends AbstractTcpSession implements EventSubs
 	private AioReadHandler readHandler;
 	private int bufferSize;
 	private String id;
+	private Channel channel;
 	private MsgConsumer consumer;
 	private  Queue<byte[]> queue;
 	public Queue<byte[]> getQueue() {
@@ -49,11 +50,12 @@ public class AioTcpServerSession extends AbstractTcpSession implements EventSubs
 	}
 
 	public AioTcpServerSession(AsynchronousServerSocketChannel serverSocketChannel,AsynchronousSocketChannel socketChannel, int bufferSize,
-			String id) {
+			String id,Channel channel) {
 		this.socketChannel = socketChannel;
 		this.serverSocketChannel = serverSocketChannel;
 		this.bufferSize = bufferSize;
 		this.id = id;
+		this.channel = channel;
 		initDefault();
 
 	}
@@ -69,10 +71,10 @@ public class AioTcpServerSession extends AbstractTcpSession implements EventSubs
 			isStarted = new AtomicBoolean(true);
 		}
 		if (readHandler == null) {
-			readHandler = new AioReadHandler(socketChannel, id);
+			readHandler = new AioReadHandler(socketChannel, id,channel);
 			readHandler.subscribeClientDisconnect(this, NotifyType.always);
 		}
-		consumer = new MsgConsumer(id,getQueue());
+		consumer = new MsgConsumer(id,getQueue(),channel);
 		consumer.subscribeServerDisconnect(this, NotifyType.always);
 		ExecutorsPool.FIXED_EXECUTORS.execute(consumer);
 	}

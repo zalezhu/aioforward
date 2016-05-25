@@ -11,7 +11,16 @@ public class ChannelConfig {
 	private String serverIp;
 	private Integer serverPort;
 	private Integer clientPort;
+	private Integer weight;
 	private ChannelType type;
+	
+	
+	public Integer getWeight() {
+		return weight;
+	}
+	public void setWeight(Integer weight) {
+		this.weight = weight;
+	}
 	public String getId() {
 		return id;
 	}

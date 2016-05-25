@@ -25,6 +25,9 @@ public class MsgConsumer extends EventSource implements Runnable {
 	private Queue<byte[]> msgQueue;
 	private String id;
 	private AtomicBoolean closed;
+	private Channel channel;
+	
+	
 
 	public boolean isClosed() {
 		return closed.get();
@@ -38,9 +41,10 @@ public class MsgConsumer extends EventSource implements Runnable {
 		this.setClosed(true);
 	}
 
-	public MsgConsumer(String id, Queue<byte[]> msgQueue) {
+	public MsgConsumer(String id, Queue<byte[]> msgQueue,Channel channel) {
 		this.id = id;
 		this.msgQueue = msgQueue;
+		this.channel = channel;
 		initDefaults();
 	}
 
@@ -62,18 +66,22 @@ public class MsgConsumer extends EventSource implements Runnable {
 		} else {
 			dataBytes = new byte[bytes.length];
 			System.arraycopy(bytes, 0, dataBytes, 0, bytes.length);
+			long start = System.currentTimeMillis();
 			while (true) {
 				bytes = msgQueue.poll();
 				if (bytes != null) {
 					// logger.debug("consumer2--->"+Arrays.toString(bytes));
 					break;
 				}
+				
 				try {
 					Thread.sleep(1);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
+			long end = System.currentTimeMillis();
+			logger.debug("Use Time (WAIT) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
 			byte[] temp = new byte[dataBytes.length + bytes.length];
 			System.arraycopy(dataBytes, 0, temp, 0, dataBytes.length);
 			System.arraycopy(bytes, 0, temp, dataBytes.length, bytes.length);
@@ -81,13 +89,12 @@ public class MsgConsumer extends EventSource implements Runnable {
 			output = false;
 		}
 		if (output) {
-			Channel channel = Hub.getInstance().getChannel(id);
 			if (channel.getType()==Channel.ChannelType.union) {
 				if (dataBytes.length >= 44) {
-					Channel toChannel =Hub.getInstance().getChannel(String.valueOf(dataBytes[44]));
+					Channel toChannel =Hub.getInstance().getPospChannel(String.valueOf(dataBytes[44]));
 					if (toChannel!= null) {
 						push(toChannel.getClientSession(), dataBytes);
-						logger.debug("send data to {} --> {}",toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
+						logger.debug("signle send data from union-{} to posp-{} --> {}",id,toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 					} else {
 						logger.info("the  channel {} is null , So we do not send any data {}" ,String.valueOf(dataBytes[44]));
 					}
@@ -95,7 +102,7 @@ public class MsgConsumer extends EventSource implements Runnable {
 					for(Channel toChannel:Hub.getInstance().getPospChannels()){
 						if (toChannel!= null) {
 							push(toChannel.getClientSession(), dataBytes);
-							logger.debug("send data to {} --> {}",toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
+							logger.debug("send data from union-{} to posp-{} --> {}",id,toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 						} else {
 							logger.info("{} the  channel is null , So we do not send any data",id);
 						}
@@ -105,7 +112,7 @@ public class MsgConsumer extends EventSource implements Runnable {
 				Channel toChannel = Hub.getInstance().balanceGetUnionChannel();
 				if(toChannel!=null){
 					push(toChannel.getClientSession(), dataBytes);
-					logger.debug("send data to {}---> {}",toChannel.getId(), HsmUtil.bytesToHexString(dataBytes));
+					logger.debug("send data from posp-{} to union-{}---> {}",id,toChannel.getId(), HsmUtil.bytesToHexString(dataBytes));
 				}else{
 					logger.info("All of the  union channel is null , So we do not send any data to union"); 
 				}
@@ -148,19 +155,22 @@ public class MsgConsumer extends EventSource implements Runnable {
 				if (qOutput != null) {
 					byte[] heads = Arrays.copyOfRange(qOutput, 0, 4);
 					int bodyLength = Integer.parseInt(new String(heads).trim());
+					long start = System.currentTimeMillis();
 					remainBytes = processMsg(qOutput, bodyLength + 4);
+					long end = System.currentTimeMillis();
+					logger.debug("Use Time (processMsg) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
 					if (remainBytes != null && remainBytes.length > 0) {
 						logger.debug(id + " remainBytes--->" + HsmUtil.bytesToHexString(remainBytes));
 					}
 				}
 				if (qOutput == null) {
-					Thread.sleep(10);
+					Thread.sleep(1);
 				}
 			} catch (Exception e) {
 				logger.error("process message have exception for " + id, e);
 
 				remainBytes = null;
-				Hub.getInstance().getChannel(id).getServerSession().closeSocketClient();
+				channel.getServerSession().closeSocketClient();
 				msgQueue.clear();
 				publish(new Event(this,EventType.remote_client_disconnect));
 			}

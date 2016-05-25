@@ -57,6 +57,10 @@ public class Hub {
 		}
 		return pospChannels.get(id);
 	}
+	
+	public Channel getPospChannel(String id){
+		return pospChannels.get(id);
+	}
 
 	public Collection<Channel> getUnionChannels() {
 		return unionChannels.values();
@@ -78,7 +82,9 @@ public class Hub {
 					less = channel;
 				} else {
 					int lessSize = less.getClientSession().getQueue().size();
+//					int lessWeight = less.getWeigth();
 					int channelSize = channel.getClientSession().getQueue().size();
+//					int channelWeight = channel.getWeigth();
 					if (lessSize > channelSize) {
 						less = channel;
 					}else if(lessSize == channelSize){
@@ -121,6 +127,10 @@ public class Hub {
 				Channel channel = new Channel();
 				channel.setId(config.getId());
 				channel.setType(config.getType());
+				if(config.getWeight()==null){
+					config.setWeight(1);
+				}
+				channel.setWeigth(config.getWeight());
 				channel.init(AsynchronousChannelGroup.withThreadPool(ExecutorsPool.CHANNEL_EXECUTORS),
 						config.getClientPort(), config.getServerIp(), config.getServerPort());
 				if (channel.getType() == ChannelType.union) {
@@ -131,5 +141,6 @@ public class Hub {
 			}
 		}
 	}
+	
 
 }

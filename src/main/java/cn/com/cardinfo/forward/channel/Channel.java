@@ -29,6 +29,15 @@ public class Channel implements EventSubscriber {
 	private ChannelType type;
 	private AtomicBoolean isClientWork;
 	private AtomicBoolean isServerWork;
+	private Integer weigth;
+	
+	public Integer getWeigth() {
+		return weigth;
+	}
+
+	public void setWeigth(Integer weigth) {
+		this.weigth = weigth;
+	}
 
 	public boolean isWork() {
 		return isClientWork.get()&&isServerWork.get();

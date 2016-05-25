@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import org.apache.log4j.Logger;
 
-import cn.com.cardinfo.forward.base.Hub;
+import cn.com.cardinfo.forward.channel.Channel;
 import cn.com.cardinfo.forward.event.Event;
 import cn.com.cardinfo.forward.event.EventSource;
 import cn.com.cardinfo.forward.event.EventSubscriber;
@@ -23,13 +23,15 @@ public class AioReadHandler extends EventSource implements CompletionHandler<Int
 	private static Logger logger = Logger.getLogger(AioReadHandler.class);
     private String id;
     private String remoteAddress;
-    public AioReadHandler(AsynchronousSocketChannel socket,String id) { 
+    private Channel channel;
+    public AioReadHandler(AsynchronousSocketChannel socket,String id,Channel channel) { 
         try {
 			remoteAddress = socket.getRemoteAddress().toString();
 		} catch (IOException e) {
 			remoteAddress = id;
 		}
         this.id = id;
+        this.channel = channel;
     } 
  
     public void cancelled(AioTcpServerSession session) { 
@@ -42,7 +44,7 @@ public class AioReadHandler extends EventSource implements CompletionHandler<Int
 			buf.flip();
 			try {
 				byte[] sendBytes = Arrays.copyOfRange(buf.array(), buf.position(), buf.limit());
-				Hub.getInstance().getChannel(id).getServerSession().getQueue().offer(sendBytes);
+				channel.getServerSession().getQueue().offer(sendBytes);
 				logger.debug(id + " received " + remoteAddress + "'s msg:" + HsmUtil.bytesToHexString(sendBytes));
 				buf.clear();
 			} catch (Exception e) {
