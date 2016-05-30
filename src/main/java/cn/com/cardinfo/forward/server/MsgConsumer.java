@@ -66,7 +66,6 @@ public class MsgConsumer extends EventSource implements Runnable {
 		} else {
 			dataBytes = new byte[bytes.length];
 			System.arraycopy(bytes, 0, dataBytes, 0, bytes.length);
-			long start = System.currentTimeMillis();
 			while (true) {
 				bytes = msgQueue.poll();
 				if (bytes != null) {
@@ -80,8 +79,6 @@ public class MsgConsumer extends EventSource implements Runnable {
 					e.printStackTrace();
 				}
 			}
-			long end = System.currentTimeMillis();
-			logger.debug("Use Time (WAIT) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
 			byte[] temp = new byte[dataBytes.length + bytes.length];
 			System.arraycopy(dataBytes, 0, temp, 0, dataBytes.length);
 			System.arraycopy(bytes, 0, temp, dataBytes.length, bytes.length);
@@ -122,11 +119,14 @@ public class MsgConsumer extends EventSource implements Runnable {
 	}
 
 	private void push(AioTcpClientSession to, byte[] bytes) {
+		long start = System.currentTimeMillis();
 		if (to!= null && !to.isSocketClosed()) {
 			to.getQueue().offer(bytes);
 		} else {
 			logger.info("{} is closed,can not send data {}",to, HsmUtil.bytesToHexString(bytes));
 		}
+		long end = System.currentTimeMillis();
+		logger.info("Use Time (PUSH) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
 	}
 	public void subscribeServerDisconnect(EventSubscriber subscriber,NotifyType type){
 		this.subscribe(subscriber, EventType.server_disconnect, type);
@@ -143,11 +143,13 @@ public class MsgConsumer extends EventSource implements Runnable {
 						remainBytes = null;
 					}else{
 						qOutput = msgQueue.poll();
-						byte[] temp = new byte[qOutput.length + remainBytes.length];
-						System.arraycopy(remainBytes, 0, temp, 0, remainBytes.length);
-						System.arraycopy(qOutput, 0, temp, remainBytes.length, qOutput.length);
-						qOutput = temp;
-						remainBytes = null;
+						if(qOutput!=null){
+							byte[] temp = new byte[qOutput.length + remainBytes.length];
+							System.arraycopy(remainBytes, 0, temp, 0, remainBytes.length);
+							System.arraycopy(qOutput, 0, temp, remainBytes.length, qOutput.length);
+							qOutput = temp;
+							remainBytes = null;
+						}
 					}
 				}else{
 					qOutput = msgQueue.poll();
@@ -155,10 +157,8 @@ public class MsgConsumer extends EventSource implements Runnable {
 				if (qOutput != null) {
 					byte[] heads = Arrays.copyOfRange(qOutput, 0, 4);
 					int bodyLength = Integer.parseInt(new String(heads).trim());
-					long start = System.currentTimeMillis();
 					remainBytes = processMsg(qOutput, bodyLength + 4);
-					long end = System.currentTimeMillis();
-					logger.debug("Use Time (processMsg) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
+					logger.debug("msg queue size {} ---{}",msgQueue.size(),id);
 					if (remainBytes != null && remainBytes.length > 0) {
 						logger.debug(id + " remainBytes--->" + HsmUtil.bytesToHexString(remainBytes));
 					}

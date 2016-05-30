@@ -10,6 +10,8 @@ import java.util.Random;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
@@ -17,6 +19,7 @@ import com.alibaba.fastjson.TypeReference;
 import cn.com.cardinfo.forward.channel.Channel;
 import cn.com.cardinfo.forward.channel.ChannelConfig;
 import cn.com.cardinfo.forward.channel.Channel.ChannelType;
+import cn.com.cardinfo.forward.server.MsgConsumer;
 import cn.com.cardinfo.forward.util.ChannelsUtil;
 import cn.com.cardinfo.forward.util.ExecutorsPool;
 import cn.com.cardinfo.forward.util.PropertiesUtil;
@@ -27,6 +30,7 @@ import cn.com.cardinfo.forward.util.PropertiesUtil;
  *
  */
 public class Hub {
+	private static Logger logger = LoggerFactory.getLogger(Hub.class);
 	private Map<String, Channel> unionChannels;
 	private Map<String, Channel> pospChannels;
 	private static Hub hub;

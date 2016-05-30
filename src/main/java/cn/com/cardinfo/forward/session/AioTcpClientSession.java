@@ -9,8 +9,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cn.com.cardinfo.forward.client.AioWriteHandler;
 import cn.com.cardinfo.forward.event.Event;
@@ -23,13 +25,13 @@ import cn.com.cardinfo.forward.util.ExecutorsPool;
  *
  */
 public class AioTcpClientSession extends AbstractTcpSession implements Runnable,EventSubscriber {
-	private static Logger logger = Logger.getLogger(AioTcpClientSession.class);
+	private static Logger logger = LoggerFactory.getLogger(AioTcpClientSession.class);
 	private AsynchronousSocketChannel socketChannel;
 	private String id;
 	// private AioWriteHandler writeHandler;
 	private AtomicBoolean isStarted;
-	private Interval sendinterval;
-	private Interval successInterval;
+	private DateTime sendHeartBeatDate;
+	private DateTime successSendDate;
 	private String remoteAddress;
 	private static final Integer HEART_BEAT_TIME = 60000;
 	private static final Integer SUCCESS_TIME = 90000;
@@ -62,13 +64,11 @@ public class AioTcpClientSession extends AbstractTcpSession implements Runnable,
 		if(queue==null){
 			this.queue = new ConcurrentLinkedQueue<byte[]>();
 		}
-		if (sendinterval == null) {
-			Date now = new Date();
-			sendinterval = new Interval(now.getTime(), now.getTime() + HEART_BEAT_TIME);
+		if (sendHeartBeatDate == null) {
+			sendHeartBeatDate = DateTime.now();
 		}
-		if (successInterval == null) {
-			Date now = new Date();
-			successInterval = new Interval(now.getTime(), now.getTime() + SUCCESS_TIME);
+		if (successSendDate == null) {
+			successSendDate =  DateTime.now();
 		}
 	}
 
@@ -79,20 +79,16 @@ public class AioTcpClientSession extends AbstractTcpSession implements Runnable,
 	}
 
 	private void resetSendInterval(){
-		Date now = new Date();
-		sendinterval = new Interval(now.getTime(), now.getTime() + HEART_BEAT_TIME);
+		sendHeartBeatDate =  DateTime.now();
 	}
 	public void resetSuccessInterval(){
-		Date now = new Date();
-		successInterval = new Interval(now.getTime(), now.getTime() + SUCCESS_TIME);
+		successSendDate =  DateTime.now();
 	}
 	private boolean needHeartbeat() {
-		Date now = new Date();
-		return !sendinterval.contains(now.getTime());
+		return sendHeartBeatDate.plusSeconds(HEART_BEAT_TIME).isBeforeNow();
 	}
 	private boolean needClose() {
-		Date now = new Date();
-		return !successInterval.contains(now.getTime());
+		return successSendDate.plusSeconds(SUCCESS_TIME).isBeforeNow();
 	}
 	public void startHeartbeat() throws IOException {
 		write(ByteBuffer.wrap(new byte[] { (byte) 48, (byte) 48, (byte) 48, (byte) 48 }));
@@ -119,6 +115,7 @@ public class AioTcpClientSession extends AbstractTcpSession implements Runnable,
 				}
 			}else{
 				this.close();
+				logger.info("long time no data send close {}",id);
 //				publish(new Event(this,EventType.remote_server_disconnect));
 			}
 		} else {
