@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import cn.com.cardinfo.forward.base.Hub;
 import cn.com.cardinfo.forward.channel.Channel;
+import cn.com.cardinfo.forward.channel.Channel.ChannelType;
 import cn.com.cardinfo.forward.event.Event;
 import cn.com.cardinfo.forward.event.EventSource;
 import cn.com.cardinfo.forward.event.EventSubscriber;
@@ -90,7 +91,7 @@ public class MsgConsumer extends EventSource implements Runnable {
 				if (dataBytes.length >= 44) {
 					Channel toChannel =Hub.getInstance().getPospChannel(String.valueOf(dataBytes[44]));
 					if (toChannel!= null) {
-						push(toChannel.getClientSession(), dataBytes);
+						push(toChannel.getClientSession(),toChannel.getType(), dataBytes);
 						logger.debug("signle send data from union-{} to posp-{} --> {}",id,toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 					} else {
 						logger.info("the  channel {} is null , So we do not send any data {}" ,String.valueOf(dataBytes[44]));
@@ -98,7 +99,7 @@ public class MsgConsumer extends EventSource implements Runnable {
 				} else {
 					for(Channel toChannel:Hub.getInstance().getPospChannels()){
 						if (toChannel!= null) {
-							push(toChannel.getClientSession(), dataBytes);
+							push(toChannel.getClientSession(),toChannel.getType(), dataBytes);
 							logger.debug("send data from union-{} to posp-{} --> {}",id,toChannel.getId(),  HsmUtil.bytesToHexString(dataBytes));
 						} else {
 							logger.info("{} the  channel is null , So we do not send any data",id);
@@ -108,7 +109,7 @@ public class MsgConsumer extends EventSource implements Runnable {
 			} else {
 				Channel toChannel = Hub.getInstance().balanceGetUnionChannel();
 				if(toChannel!=null){
-					push(toChannel.getClientSession(), dataBytes);
+					push(toChannel.getClientSession(),toChannel.getType(),dataBytes);
 					logger.debug("send data from posp-{} to union-{}---> {}",id,toChannel.getId(), HsmUtil.bytesToHexString(dataBytes));
 				}else{
 					logger.info("All of the  union channel is null , So we do not send any data to union"); 
@@ -118,18 +119,19 @@ public class MsgConsumer extends EventSource implements Runnable {
 		return remainBytes;
 	}
 
-	private void push(AioTcpClientSession to, byte[] bytes) {
+	private void push(AioTcpClientSession to,ChannelType type, byte[] bytes) {
 		long start = System.currentTimeMillis();
 		if (to!= null && !to.isSocketClosed()) {
 			to.getQueue().offer(bytes);
 		} else {
-			logger.info("{} is closed,can not send data {}",to, HsmUtil.bytesToHexString(bytes));
+			to.publishClientDisConnected();
+			logger.info("{} is closed,can not send data {}",to.getId(),HsmUtil.bytesToHexString(bytes));
 		}
 		long end = System.currentTimeMillis();
 		logger.info("Use Time (PUSH) {} ms msg queue size {} ---{}",(end-start),msgQueue.size(),id);
 	}
-	public void subscribeServerDisconnect(EventSubscriber subscriber,NotifyType type){
-		this.subscribe(subscriber, EventType.server_disconnect, type);
+	public void subscribeRemoteClientDisconnect(EventSubscriber subscriber,NotifyType type){
+		this.subscribe(subscriber, EventType.remote_client_disconnect, type);
 	}
 	@Override
 	public void run() {

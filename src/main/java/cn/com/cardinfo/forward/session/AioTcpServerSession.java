@@ -75,7 +75,7 @@ public class AioTcpServerSession extends AbstractTcpSession implements EventSubs
 			readHandler.subscribeClientDisconnect(this, NotifyType.always);
 		}
 		consumer = new MsgConsumer(id,getQueue(),channel);
-		consumer.subscribeServerDisconnect(this, NotifyType.always);
+		consumer.subscribeRemoteClientDisconnect(this, NotifyType.always);
 		ExecutorsPool.FIXED_EXECUTORS.execute(consumer);
 	}
 	public ByteBuffer getReadBuffer() {
@@ -146,7 +146,6 @@ public class AioTcpServerSession extends AbstractTcpSession implements EventSubs
 	public void subscribeClientDisconnect(EventSubscriber subscriber,NotifyType type){
 		this.subscribe(subscriber, EventType.remote_client_disconnect, type);
 	}
-	
 	@Override
 	public void trigger(Event event) {
 		publish(event);

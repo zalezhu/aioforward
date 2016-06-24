@@ -40,6 +40,10 @@ public class AioTcpClientSession extends AbstractTcpSession implements Runnable,
 		return queue;
 	}
 
+	public String getId() {
+		return id;
+	}
+
 	public void setQueue(Queue<byte[]> queue) {
 		this.queue = queue;
 	}
@@ -187,7 +191,9 @@ public class AioTcpClientSession extends AbstractTcpSession implements Runnable,
 	public void trigger(Event event) {
 		publish(event);
 	}
-
+	public void publishClientDisConnected(){
+		publish(new Event(this, EventType.remote_server_disconnect));
+	}
 	@Override
 	public String getName() {
 		return id+"-Client-Session";
